@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AI Lab – Math Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+<style>
+ :root{--p1:#a78bfa;--p2:#8b5cf6;--card:#fff;--shadow:rgba(139,95,246,.25);--vio:#8b5cf6}
+
+ *{box-sizing:border-box;margin:0;padding:0}
+ body{font-family:Poppins,sans-serif;background:#e9d8ff;display:flex;flex-direction:column;align-items:center}
+
+ header{width:100%;padding:35px 15px;text-align:center;color:#fff;
+        background:linear-gradient(90deg,var(--p1),var(--p2));
+        border-bottom-left-radius:25px;border-bottom-right-radius:25px;
+        box-shadow:0 5px 20px var(--shadow)}
+ header h1{font-size:1.8rem;font-weight:600;margin-bottom:6px}
+
+ .wrap{width:90%;max-width:1100px;display:flex;gap:40px;margin:50px auto;flex-wrap:wrap}
+
+ .card{background:var(--card);border-radius:18px;padding:35px 30px;box-shadow:0 20px 40px var(--shadow);flex:1}
+ .right{min-width:460px}
+ h2{color:var(--vio);font-size:1.15rem;font-weight:600;margin-bottom:25px}
+
+ input,select{width:100%;padding:14px 16px;border:2px solid #e5e7eb;border-radius:9px;
+              background:#f6f7fb;font-size:.9rem;color:#1f2937;margin-bottom:15px}
+ input:focus,select:focus{outline:none;border-color:var(--vio);box-shadow:0 0 0 3px rgba(139,95,246,.2);background:#fff}
+ input.error{border-color:#ef4444;background:#fef2f2}
+
+ .btn{width:100%;padding:14px;border:none;border-radius:9px;font-weight:600;color:#fff;
+      background:linear-gradient(90deg,var(--p2),var(--p1));cursor:pointer;font-size:.95rem}
+ .btn:hover{filter:brightness(1.08)}
+
+ #svgWrap{margin-top:20px;min-height:420px;border:2px dashed var(--vio);border-radius:16px;
+          display:flex;align-items:center;justify-content:center;color:var(--vio);background:#fbfaff}
+
+ .errMsg{color:#ef4444;font-size:.8rem;margin-top:5px;display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ AI Lab's Mathematical Assistant</h1>
+  <p>Smart Calculator + Fibonacci Curve Visualizer</p>
+</header>
+
+<div class="wrap">
+
+  <!-- CALCULATOR -->
+  <div class="card" style="max-width:380px">
+    <h2>Calculator</h2>
+    <select id="op">
+      <option value="add">➕ Addition</option>
+      <option value="sub">➖ Subtraction</option>
+      <option value="mul">✖️ Multiplication</option>
+      <option value="div">➗ Division</option>
+    </select>
+    <input id="num1" type="number" placeholder="Enter number 1">
+    <input id="num2" type="number" placeholder="Enter number 2">
+    <button class="btn" onclick="doCalc()">Calculate</button>
+    <p id="calcRes" style="margin-top:14px;font-weight:600"></p>
+  </div>
+
+  <!-- FIBONACCI -->
+  <div class="card right">
+    <h2>🌈 Fibonacci Curve</h2>
+
+    <div style="display:flex;gap:14px">
+      <input id="nVal" type="number" placeholder="Enter n (0-35)" style="flex:1;margin-bottom:0">
+      <button class="btn" style="max-width:160px" onclick="draw()">Draw</button>
+    </div>
+    <span id="nErr" class="errMsg"></span>
+
+    <div id="svgWrap">Fibonacci Spiral will appear here ✨</div>
+  </div>
+
+</div>
+
+<script>
+/* calculator */
+function doCalc(){
+  const n1=document.getElementById('num1').value,
+        n2=document.getElementById('num2').value,
+        op=document.getElementById('op').value,
+        res=document.getElementById('calcRes');
+  if(!n1||!n2){alert("Enter numbers");return;}
+  const f=new FormData();f.append('num1',n1);f.append('num2',n2);f.append('op',op);
+  fetch('/calculate',{method:'POST',body:f}).then(r=>r.json()).then(d=>{
+     res.textContent=d.status==='success'?"Result : "+d.result:"Error!";
+  });
+}
+
+/* fibonacci */
+function draw(){
+  const box=document.getElementById('nVal');
+  const span=document.getElementById('nErr');
+  let n=parseInt(box.value);
+
+  span.style.display='none';box.classList.remove('error');
+
+  if(isNaN(n)||n<0){
+      span.textContent="Enter a positive number";span.style.display='inline';box.classList.add('error');return;
+  }
+  if(n>35){
+      span.textContent="Maximum 35, drawing with N = 35";
+      span.style.display='inline';
+      box.classList.add('error');
+      n=35;box.value=35;
+  }
+  const f=new FormData();f.append('n',n);
+  fetch('/fibonacci/svg',{method:'POST',body:f})
+     .then(r=>r.text()).then(svg=>document.getElementById('svgWrap').innerHTML=svg);
+}
+</script>
+</body>
+</html>
