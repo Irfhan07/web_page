@@ -1,18 +1,17 @@
-# 1️⃣  official JDK base image (17 LTS)
-FROM eclipse-temurin:17-jdk-alpine
-
-# 2️⃣  app code inside container
+# Step 1: Build the project using Maven
+FROM maven:3.9.4-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY . .
+RUN mvn clean package -DskipTests
 
-# 3️⃣  Maven build (skip tests -> faster)
-RUN ./mvnw -q package -DskipTests
+# Step 2: Run the Spring Boot JAR
+FROM eclipse-temurin:17-jdk
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 
-# 4️⃣  expose SpringBoot default 8080
 EXPOSE 8080
 
-# 5️⃣  run the JAR
-CMD ["java","-jar","/app/target/*.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
 
 
 
